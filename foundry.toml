@@ -1,0 +1,10 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+libs = ["lib", "lib/credible-std/lib"]
+remappings = [
+    "credible-std/=lib/credible-std/src/",
+    "forge-std/=lib/credible-std/lib/forge-std/src/",
+    "openzeppelin-contracts/=lib/credible-std/lib/openzeppelin-contracts/contracts/"
+]
