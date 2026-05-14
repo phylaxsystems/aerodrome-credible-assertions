@@ -28,6 +28,20 @@ They check that:
 
 This catches diverted pool fees, stale or malicious Voter mappings, and fee-accounting updates that no longer reconcile with reward custody.
 
+### Treasury Safe veAERO custody, delegation, and voting lockdown
+
+[`AerodromeVeSafeAssertion`](src/AerodromeVeSafeAssertion.sol) protects an Aerodrome governance Safe from veAERO custody and voting-power side effects. It is armed against the Safe address and runs at the end of every Safe transaction.
+
+It checks that the Safe transaction did not:
+
+- emit a veAERO `Transfer`, `Approval`, or `ApprovalForAll` log;
+- emit a veAERO `DelegateChanged` log;
+- call any veAERO custody or voting-power selector (`approve`, `setApprovalForAll`, `transferFrom`, `safeTransferFrom`, `withdraw`, `merge`, `split`, `createManagedLockFor`, `createLock`/`createLockFor`, `depositFor`, `increaseAmount`, `increaseUnlockTime`, `delegate`/`delegateBySig`, `depositManaged`/`withdrawManaged`, `lockPermanent`/`unlockPermanent`);
+- call any Aerodrome `Voter` voting selector (`vote`, `reset`, `poke`, `depositManaged`, `withdrawManaged`);
+- cast a `ProtocolGovernor` or `EpochGovernor` vote keyed to the Safe address.
+
+This catches both signer compromise and Safe-UI compromise: regardless of what calldata the signers approve, the transaction is invalidated on-chain if its execution would move the Safe's veNFT, change its voting-power delegation, vote a gauge, or cast a governor vote.
+
 ## Source Context
 
 The assertions were written against the public Aerodrome contract shapes:
@@ -58,6 +72,7 @@ Credible assertion tests should be run with `pcl test`:
 ```sh
 pcl test --match-contract AerodromePoolLiquidityAccountingAssertionTest
 pcl test --match-contract AerodromeGaugeFeeFlowAssertionTest
+pcl test --match-contract AerodromeVeSafeAssertionTest
 ```
 
 The tests arm each assertion with `cl.assertion(...)`, execute the monitored Aerodrome-style call, and cover both honest behavior and a focused failing path.
